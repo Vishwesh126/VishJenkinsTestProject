@@ -1,3 +1,3 @@
-def call(name){
+def nameMethod(name){
   echo "Hi ${name}"
 }
