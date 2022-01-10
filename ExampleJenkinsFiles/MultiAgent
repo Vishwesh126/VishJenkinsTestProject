@@ -1,0 +1,38 @@
+@Library('MyTestLibrary') _
+currentBuild.displayName = "Vish - #"+env.BUILD_NUMBER
+
+pipeline{
+    agent any
+    stages(){
+        stage("Welcome Stage"){
+            agent{
+                label 'master'
+            }
+            steps(){
+                script{
+                    welcome.nameMethod("Setta Pillow")   
+                }
+            }
+        }
+        stage("Multiplication"){
+            agent{
+                label 'maven_slave'
+            }
+            steps(){
+                script{
+                    calculator.mul(10,5)
+                }
+            }
+        }
+        stage("Addition"){
+            agent{
+                label 'maven_slave'
+            }
+            steps(){
+                script{
+                    calculator.add(10,5) 
+                }
+            }
+        }
+    }
+}
