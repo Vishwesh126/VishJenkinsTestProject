@@ -1,0 +1,32 @@
+currentBuild.displayName = "VishJob - #"+env.BUILD_NUMBER
+pipeline{
+    agent any
+    environment{
+        PATH="/opt/maven/bin:$PATH"
+    }
+    stages{
+        stage("Git Checkout"){
+            steps{
+                echo "Hi Vish, DevOps Engineer"
+                git credentialsId: 'VishGitCreds', url: 'https://github.com/Vishwesh126/yankils-hello-world.git'
+            }
+        }
+        stage("Maven Build"){
+            steps{
+                sh 'mvn clean package'
+                sh 'mv webapp/target/*.war webapp/target/mywebapp.war'
+            }
+        }
+        stage("TomcatDeploy"){
+            steps{
+                sshagent(['UbuntuCredsTomcatDeploy']) {
+                    sh """
+                        scp -o StrictHostKeyChecking=no webapp/target/mywebapp.war ubuntu@172.31.1.65:/opt/tomcat9/webapps/
+                        ssh ubuntu@172.31.1.65 /opt/tomcat9/bin/shutdown.sh
+                        ssh ubuntu@172.31.1.65 /opt/tomcat9/bin/startup.sh
+                    """
+                }
+            }
+        }
+    }
+}
