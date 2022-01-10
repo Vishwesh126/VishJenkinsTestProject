@@ -1,0 +1,26 @@
+pipeline{
+    agent any
+    environment{
+        PATH="/opt/maven/bin:$PATH"
+    }
+    stages(){
+        stage('Clone'){
+            agent{
+                    label 'master'
+                }
+            steps{
+                git credentialsId: 'VishGitCreds', url: 'https://github.com/Vishwesh126/yankils-hello-world.git'
+                stash 'StashTest'
+            }
+        }
+        stage('Maven Build'){
+            agent{
+                label 'maven_slave'
+            }
+            steps{
+                unstash 'StashTest'
+                sh 'mvn clean package'
+            }
+        }
+    }
+}
