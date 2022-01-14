@@ -1,0 +1,47 @@
+pipeline{
+    agent any
+    stages{
+        stage('Clone') {
+            steps{
+                git credentialsId: 'VishGitCreds', url: 'https://github.com/Vishwesh126/yankils-hello-world.git'
+            }
+        }
+        stage('Build'){
+            steps{
+                sh 'mvn clean package'
+                sh 'mv webapp/target/webapp.war webapp/target/mywebapp.war'
+            }
+        }
+        stage('Tomcat Deploy'){
+            steps{
+                script{
+                    sshagent(['Slave_Tomcat']) {
+                        sh """
+                            scp -o StrictHostKeyChecking=no webapp/target/mywebapp.war ubuntu@172.31.1.65:/opt/tomcat9/webapps
+                            ssh ubuntu@172.31.1.65 /opt/tomcat9/bin/shutdown.sh
+                            sleep 2s
+                            ssh ubuntu@172.31.1.65 /opt/tomcat9/bin/startup.sh
+                        """
+                    }
+                }
+            }
+        }
+        stage('SonarAnalysis'){
+            steps{
+                script{
+                    withSonarQubeEnv('SonarServer') {
+                        sh 'mvn sonar:sonar'
+                    }
+                    timeout(time: 1, unit: 'HOURS'){
+                        def qgStatus = waitForQualityGate()
+                        if(qgStatus != 'OK'){
+                            error "Pipeline did not meet the quality gate, Hence failing the build ${qgStatus.status}"
+                        }
+                        sh 'mvn clean package'
+                    }
+                }
+            }
+            
+        }
+    }
+}
